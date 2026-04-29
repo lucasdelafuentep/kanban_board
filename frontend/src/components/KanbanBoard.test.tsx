@@ -1,6 +1,15 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { KanbanBoard } from "@/components/KanbanBoard";
+import { vi } from "vitest";
+import { useRouter } from "next/navigation";
+
+// Mock the useRouter hook
+vi.mock("next/navigation", () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+  })),
+}));
 
 const getFirstColumn = () => screen.getAllByTestId(/column-/i)[0];
 

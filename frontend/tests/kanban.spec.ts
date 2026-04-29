@@ -1,13 +1,40 @@
 import { expect, test } from "@playwright/test";
 
-test("loads the kanban board", async ({ page }) => {
+// Helper to login
+async function login(page: any) {
+  // Clear any existing auth
+  await page.context().clearCookies();
+  
   await page.goto("/");
+  
+  // Wait for page to load
+  await page.waitForLoadState("networkidle");
+    
+  // Check if we need to login by looking for login button
+  const loginButton = page.getByRole("button", { name: "Sign in" });
+  const isLoginPage = await loginButton.isVisible().catch(() => false);
+    
+  if (isLoginPage) {
+    await page.getByLabel("Username").fill("user");
+    await page.getByLabel("Password").fill("password");
+    await loginButton.click();
+    // Wait for redirect to kanban board
+    await page.waitForURL("**/", { timeout: 10000 });
+    await page.waitForLoadState("networkidle");
+  }
+    
+  // Wait for kanban board to be visible
+  await page.waitForSelector('[data-test-id^="column-"]', { timeout: 10000 });
+}
+
+test("loads the kanban board", async ({ page }) => {
+  await login(page);
   await expect(page.getByRole("heading", { name: "Kanban Studio" })).toBeVisible();
   await expect(page.locator('[data-testid^="column-"]')).toHaveCount(5);
 });
 
 test("adds a card to a column", async ({ page }) => {
-  await page.goto("/");
+  await login(page);
   const firstColumn = page.locator('[data-testid^="column-"]').first();
   await firstColumn.getByRole("button", { name: /add a card/i }).click();
   await firstColumn.getByPlaceholder("Card title").fill("Playwright card");
@@ -17,7 +44,7 @@ test("adds a card to a column", async ({ page }) => {
 });
 
 test("moves a card between columns", async ({ page }) => {
-  await page.goto("/");
+  await login(page);
   const card = page.getByTestId("card-card-1");
   const targetColumn = page.getByTestId("column-col-review");
   const cardBox = await card.boundingBox();
