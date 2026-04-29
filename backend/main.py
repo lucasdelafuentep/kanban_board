@@ -35,9 +35,17 @@ if os.path.exists("/app/frontend/out"):
         # Skip API routes - they should be handled above
         if full_path.startswith("api/"):
             return {"error": "API route not found"}
+        
+        # Try exact file match
         path = f"/app/frontend/out/{full_path}"
         if os.path.exists(path) and os.path.isfile(path):
             return FileResponse(path)
+            
+        # Try .html suffix (Next.js app router static export convention)
+        path_html = f"/app/frontend/out/{full_path}.html"
+        if os.path.exists(path_html) and os.path.isfile(path_html):
+            return FileResponse(path_html)
+            
         return FileResponse("/app/frontend/out/index.html")
 else:
     @app.get("/", response_class=HTMLResponse)

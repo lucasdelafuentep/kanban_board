@@ -24,7 +24,7 @@ async function login(page: any) {
   }
     
   // Wait for kanban board to be visible
-  await page.waitForSelector('[data-test-id^="column-"]', { timeout: 10000 });
+  await page.waitForSelector('[data-testid^="column-"]', { timeout: 10000 });
 }
 
 test("loads the kanban board", async ({ page }) => {

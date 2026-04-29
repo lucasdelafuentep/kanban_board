@@ -23,7 +23,7 @@ export const KanbanBoard = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("auth");
-    // Force a full page reload to login
+    // Navigate using window.location for reliable redirect in all environments
     window.location.href = "/login";
   };
 
