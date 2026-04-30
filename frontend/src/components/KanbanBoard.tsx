@@ -15,32 +15,38 @@ import {
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
 import { createId, initialData, moveCard, type BoardData } from "@/lib/kanban";
+import { AiSidebar } from "@/components/AiSidebar";
+import { MessageSquare } from "lucide-react";
 
 export const KanbanBoard = () => {
   const router = useRouter();
   const [board, setBoard] = useState<BoardData | null>(null);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
+
+  const refreshBoard = useCallback(async () => {
+    try {
+      const response = await fetch("/api/board");
+      if (response.ok) {
+        const data = await response.json();
+        setBoard(data);
+      } else {
+        if (response.status === 401) {
+          window.location.href = "/login";
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching board:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   // Fetch board on mount
   useEffect(() => {
-    const fetchBoard = async () => {
-      try {
-        const response = await fetch("/api/board");
-        if (response.ok) {
-          const data = await response.json();
-          setBoard(data);
-        } else {
-          console.error("Failed to fetch board");
-        }
-      } catch (error) {
-        console.error("Error fetching board:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchBoard();
-  }, []);
+    refreshBoard();
+  }, [refreshBoard]);
 
   const saveBoard = useCallback(async (newBoard: BoardData) => {
     try {
@@ -188,6 +194,14 @@ export const KanbanBoard = () => {
                 </p>
               </div>
               <button
+                onClick={() => setIsAiSidebarOpen(true)}
+                data-testid="open-ai-chat"
+                className="flex items-center gap-2 rounded-full bg-[var(--primary-blue)] px-5 py-2 text-xs font-bold uppercase tracking-wide text-white transition hover:brightness-110 shadow-lg"
+              >
+                <MessageSquare className="h-4 w-4" />
+                AI Chat
+              </button>
+              <button
                 onClick={handleLogout}
                 className="rounded-full border border-[var(--stroke)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--gray-text)] transition hover:border-[var(--primary-blue)] hover:text-[var(--navy-dark)]"
               >
@@ -235,6 +249,12 @@ export const KanbanBoard = () => {
           </DragOverlay>
         </DndContext>
       </main>
+
+      <AiSidebar 
+        isOpen={isAiSidebarOpen} 
+        onClose={() => setIsAiSidebarOpen(false)} 
+        onBoardUpdate={refreshBoard}
+      />
     </div>
   );
 };

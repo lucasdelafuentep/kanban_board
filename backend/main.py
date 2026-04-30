@@ -7,6 +7,7 @@ import json
 from .database import init_db, get_db
 from .security import verify_password
 from .auth import create_access_token, get_current_user
+from .ai import call_ai
 
 app = FastAPI()
 
@@ -52,6 +53,91 @@ async def logout(response: Response):
 @app.get("/api/auth/check")
 async def check_auth(current_user=Depends(get_current_user)):
     return current_user
+
+def apply_ai_actions(board: dict, actions: list):
+    if not actions:
+        return board
+    
+    # Deep copy for safety if needed, but dict is enough for now
+    new_board = board.copy()
+    
+    for action in actions:
+        action_type = action.get("type")
+        
+        if action_type == "RENAME_COLUMN":
+            col_id = action.get("columnId")
+            new_title = action.get("newTitle")
+            for col in new_board["columns"]:
+                if col["id"] == col_id:
+                    col["title"] = new_title
+        
+        elif action_type == "ADD_CARD":
+            col_id = action.get("columnId")
+            title = action.get("title")
+            details = action.get("details", "")
+            card_id = f"card-{os.urandom(4).hex()}"
+            new_board["cards"][card_id] = {"id": card_id, "title": title, "details": details}
+            for col in new_board["columns"]:
+                if col["id"] == col_id:
+                    col["cardIds"].append(card_id)
+        
+        elif action_type == "MOVE_CARD":
+            card_id = action.get("cardId")
+            target_col_id = action.get("targetColumnId")
+            
+            # Remove from old column
+            for col in new_board["columns"]:
+                if card_id in col["cardIds"]:
+                    col["cardIds"].remove(card_id)
+            
+            # Add to new column
+            for col in new_board["columns"]:
+                if col["id"] == target_col_id:
+                    col["cardIds"].append(card_id)
+        
+        elif action_type == "EDIT_CARD":
+            card_id = action.get("cardId")
+            title = action.get("title")
+            details = action.get("details")
+            if card_id in new_board["cards"]:
+                if title:
+                    new_board["cards"][card_id]["title"] = title
+                if details:
+                    new_board["cards"][card_id]["details"] = details
+        
+        elif action_type == "DELETE_CARD":
+            card_id = action.get("cardId")
+            # Remove from all columns
+            for col in new_board["columns"]:
+                if card_id in col["cardIds"]:
+                    col["cardIds"].remove(card_id)
+            # Remove from cards map
+            if card_id in new_board["cards"]:
+                del new_board["cards"][card_id]
+                    
+    return new_board
+
+@app.post("/api/ai/chat")
+async def ai_chat(data: dict, current_user=Depends(get_current_user), db=Depends(get_db)):
+    messages = data.get("messages", [])
+    
+    # Get current board state for context
+    async with db.execute("SELECT data FROM boards WHERE user_id = ?", (current_user["id"],)) as cursor:
+        row = await cursor.fetchone()
+        board_context = json.loads(row[0]) if row else None
+    
+    ai_response = await call_ai(messages, board_context)
+    
+    if "actions" in ai_response and ai_response["actions"] and board_context:
+        updated_board = apply_ai_actions(board_context, ai_response["actions"])
+        # Persist updated board
+        await db.execute("""
+            UPDATE boards SET data = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = ?
+        """, (json.dumps(updated_board), current_user["id"]))
+        await db.commit()
+    
+    return ai_response
 
 @app.get("/api/board")
 async def get_board(current_user=Depends(get_current_user), db=Depends(get_db)):
