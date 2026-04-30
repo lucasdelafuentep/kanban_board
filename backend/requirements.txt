@@ -1,2 +1,8 @@
 fastapi
 uvicorn
+aiosqlite
+pytest
+pytest-asyncio
+httpx
+PyJWT
+bcrypt

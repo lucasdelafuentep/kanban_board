@@ -1,8 +1,8 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { vi } from "vitest";
-import { useRouter } from "next/navigation";
+import { initialData } from "@/lib/kanban";
 
 // Mock the useRouter hook
 vi.mock("next/navigation", () => ({
@@ -11,17 +11,29 @@ vi.mock("next/navigation", () => ({
   })),
 }));
 
-const getFirstColumn = () => screen.getAllByTestId(/column-/i)[0];
+// Mock global fetch
+global.fetch = vi.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve(initialData),
+  } as Response)
+);
+
+const getFirstColumn = async () => (await screen.findAllByTestId(/column-/i))[0];
 
 describe("KanbanBoard", () => {
-  it("renders five columns", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("renders five columns", async () => {
     render(<KanbanBoard />);
-    expect(screen.getAllByTestId(/column-/i)).toHaveLength(5);
+    expect(await screen.findAllByTestId(/column-/i)).toHaveLength(5);
   });
 
   it("renames a column", async () => {
     render(<KanbanBoard />);
-    const column = getFirstColumn();
+    const column = await getFirstColumn();
     const input = within(column).getByLabelText("Column title");
     await userEvent.clear(input);
     await userEvent.type(input, "New Name");
@@ -30,7 +42,7 @@ describe("KanbanBoard", () => {
 
   it("adds and removes a card", async () => {
     render(<KanbanBoard />);
-    const column = getFirstColumn();
+    const column = await getFirstColumn();
     const addButton = within(column).getByRole("button", {
       name: /add a card/i,
     });

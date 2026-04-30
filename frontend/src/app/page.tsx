@@ -9,40 +9,21 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const checkAuth = () => {
-      const auth = localStorage.getItem("auth");
-      if (!auth) {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch("/api/auth/check");
+        if (response.ok) {
+          setIsAuthenticated(true);
+        } else {
+          router.push("/login");
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
         router.push("/login");
-        return;
       }
-      
-      // Only proceed if we're on the correct port (8000) or localhost
-      const isLocalhost = window.location.hostname === "localhost";
-      const correctPort = window.location.port === "8000" || !window.location.port;
-      
-      if (isLocalhost && !correctPort) {
-        // If served through backend on different port, force redirect to correct URL
-        router.replace(`http://localhost:3000${window.location.pathname}`);
-        return;
-      }
-      
-      setIsAuthenticated(auth === "true");
     };
     
     checkAuth();
-    
-    // Listen for auth changes
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "auth") {
-        setIsAuthenticated(e.newValue === "true");
-        if (e.newValue !== "true") {
-           router.push("/login");
-        }
-      }
-    };
-    
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
   }, [router]);
 
   // Don't render anything until we've confirmed authentication

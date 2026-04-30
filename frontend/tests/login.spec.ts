@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 test.describe("Login functionality", () => {
   test("should show login page when not authenticated", async ({ page }) => {
     // Clear any existing auth
+    await page.context().clearCookies();
     await page.goto("/");
     
     // Should be on login page
@@ -39,7 +40,9 @@ test.describe("Login functionality", () => {
 
   test("should logout and redirect to login", async ({ page }) => {
     // First login
+    await page.context().clearCookies(); // Start fresh
     await page.goto("/");
+    
     await page.getByLabel(/username/i).fill("user");
     await page.getByLabel(/password/i).fill("password");
     await page.getByRole("button", { name: /sign in/i }).click();
@@ -47,11 +50,10 @@ test.describe("Login functionality", () => {
     // Wait for kanban board and verify we're logged in
     await page.waitForSelector('[data-testid^="column-"]', { timeout: 10000 });
     
-    // Manually clear localStorage and reload to verify the redirect mechanism works
-    await page.evaluate(() => localStorage.removeItem("auth"));
-    await page.reload();
+    // Click logout button
+    await page.getByRole("button", { name: /logout/i }).click();
     
-    // After clearing auth and reloading, page.tsx should redirect to /login
+    // After logging out, should redirect to /login
     await page.waitForURL('**/login', { timeout: 10000 });
     await expect(page.getByLabel(/username/i)).toBeVisible();
   });

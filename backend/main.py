@@ -1,8 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException, Response, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
+import json
+from .database import init_db, get_db
+from .security import verify_password
+from .auth import create_access_token, get_current_user
 
 app = FastAPI()
 
@@ -14,9 +18,60 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/api/hello")
-def hello():
-    return {"message": "Hello from FastAPI!"}
+@app.on_event("startup")
+async def startup():
+    await init_db()
+
+@app.post("/api/auth/login")
+async def login(data: dict, response: Response, db=Depends(get_db)):
+    username = data.get("username")
+    password = data.get("password")
+    
+    async with db.execute("SELECT * FROM users WHERE username = ?", (username,)) as cursor:
+        user = await cursor.fetchone()
+        if not user or not verify_password(password, user["password"]):
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        
+        token = create_access_token(data={"sub": username})
+        response.set_cookie(
+            key="access_token",
+            value=token,
+            httponly=True,
+            max_age=86400, # 1 day
+            samesite="lax",
+            secure=False,
+            path="/",
+        )
+        return {"status": "success", "username": username}
+
+@app.post("/api/auth/logout")
+async def logout(response: Response):
+    response.delete_cookie("access_token")
+    return {"status": "success"}
+
+@app.get("/api/auth/check")
+async def check_auth(current_user=Depends(get_current_user)):
+    return current_user
+
+@app.get("/api/board")
+async def get_board(current_user=Depends(get_current_user), db=Depends(get_db)):
+    async with db.execute("""
+        SELECT b.data FROM boards b
+        WHERE b.user_id = ?
+    """, (current_user["id"],)) as cursor:
+        row = await cursor.fetchone()
+        if row:
+            return json.loads(row[0])
+        raise HTTPException(status_code=404, detail="Board not found")
+
+@app.put("/api/board")
+async def update_board(data: dict, current_user=Depends(get_current_user), db=Depends(get_db)):
+    await db.execute("""
+        UPDATE boards SET data = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = ?
+    """, (json.dumps(data), current_user["id"]))
+    await db.commit()
+    return {"status": "success"}
 
 # Serve frontend static files
 if os.path.exists("/app/frontend/out"):

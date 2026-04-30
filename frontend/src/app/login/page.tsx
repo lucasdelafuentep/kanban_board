@@ -9,13 +9,23 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === "user" && password === "password") {
-      localStorage.setItem("auth", "true");
-      router.push("/");
-    } else {
-      setError("Invalid credentials. Use user/password.");
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      
+      if (response.ok) {
+        // Cookie is set by the backend
+        router.push("/");
+      } else {
+        setError("Invalid credentials. Use user/password.");
+      }
+    } catch (error) {
+      setError("Failed to login. Please try again.");
     }
   };
 
