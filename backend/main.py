@@ -4,16 +4,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
 import json
-from .database import init_db, get_db
+from .database import init_db, get_db, initial_data
 from .security import verify_password
 from .auth import create_access_token, get_current_user
 from .ai import call_ai
 
 app = FastAPI()
 
+CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
+SECURE_COOKIES = os.environ.get("SECURE_COOKIES", "false").lower() == "true"
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -22,6 +25,10 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup():
     await init_db()
+
+@app.get("/api/hello")
+async def hello():
+    return {"message": "Hello from FastAPI!"}
 
 @app.post("/api/auth/login")
 async def login(data: dict, response: Response, db=Depends(get_db)):
@@ -40,7 +47,7 @@ async def login(data: dict, response: Response, db=Depends(get_db)):
             httponly=True,
             max_age=86400, # 1 day
             samesite="lax",
-            secure=False,
+            secure=SECURE_COOKIES,
             path="/",
         )
         return {"status": "success", "username": username}
@@ -148,14 +155,32 @@ async def get_board(current_user=Depends(get_current_user), db=Depends(get_db)):
         row = await cursor.fetchone()
         if row:
             return json.loads(row[0])
-        raise HTTPException(status_code=404, detail="Board not found")
+        # Auto-create board for user if not exists
+        await db.execute("""
+            INSERT INTO boards (user_id, data)
+            VALUES (?, ?)
+        """, (current_user["id"], json.dumps(initial_data)))
+        await db.commit()
+        return initial_data
 
 @app.put("/api/board")
 async def update_board(data: dict, current_user=Depends(get_current_user), db=Depends(get_db)):
-    await db.execute("""
-        UPDATE boards SET data = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = ?
-    """, (json.dumps(data), current_user["id"]))
+    user_id = current_user["id"]
+    # Check if board exists
+    async with db.execute("SELECT id FROM boards WHERE user_id = ?", (user_id,)) as cursor:
+        row = await cursor.fetchone()
+    
+    if row:
+        await db.execute("""
+            UPDATE boards SET data = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = ?
+        """, (json.dumps(data), user_id))
+    else:
+        await db.execute("""
+            INSERT INTO boards (user_id, data, updated_at)
+            VALUES (?, ?, CURRENT_TIMESTAMP)
+        """, (user_id, json.dumps(data)))
+    
     await db.commit()
     return {"status": "success"}
 

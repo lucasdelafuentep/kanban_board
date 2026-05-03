@@ -7,7 +7,7 @@ from .security import get_password_hash
 DB_PATH = "kanban.db"
 
 # Default data for new boards
-INITIAL_DATA = {
+initial_data = {
     "columns": [
         {"id": "col-backlog", "title": "Backlog", "cardIds": ["card-1", "card-2"]},
         {"id": "col-discovery", "title": "Discovery", "cardIds": ["card-3"]},
@@ -108,7 +108,7 @@ async def init_db():
                         await db.execute("""
                             INSERT INTO boards (user_id, data)
                             VALUES (?, ?)
-                        """, (user_id, json.dumps(INITIAL_DATA)))
+                        """, (user_id, json.dumps(initial_data)))
         
         await db.commit()
 

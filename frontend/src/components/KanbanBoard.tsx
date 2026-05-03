@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import {
   DndContext,
   DragOverlay,
@@ -14,18 +13,33 @@ import {
 } from "@dnd-kit/core";
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
-import { createId, initialData, moveCard, type BoardData } from "@/lib/kanban";
+import { createId, moveCard, type BoardData } from "@/lib/kanban";
 import { AiSidebar } from "@/components/AiSidebar";
 import { MessageSquare } from "lucide-react";
 
 export const KanbanBoard = () => {
-  const router = useRouter();
   const [board, setBoard] = useState<BoardData | null>(null);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const checkAuth = useCallback(async () => {
+    try {
+      const response = await fetch("/api/auth/check");
+      if (!response.ok) {
+        window.location.href = "/login";
+        return false;
+      }
+      return true;
+    } catch {
+      window.location.href = "/login";
+      return false;
+    }
+  }, []);
 
   const refreshBoard = useCallback(async () => {
+    setError(null);
     try {
       const response = await fetch("/api/board");
       if (response.ok) {
@@ -34,10 +48,13 @@ export const KanbanBoard = () => {
       } else {
         if (response.status === 401) {
           window.location.href = "/login";
+        } else {
+          setError("Failed to load board. Please try again.");
         }
       }
     } catch (error) {
       console.error("Error fetching board:", error);
+      setError("Connection error. Please check your network.");
     } finally {
       setIsLoading(false);
     }
@@ -45,8 +62,14 @@ export const KanbanBoard = () => {
 
   // Fetch board on mount
   useEffect(() => {
-    refreshBoard();
-  }, [refreshBoard]);
+    const init = async () => {
+      const isAuthenticated = await checkAuth();
+      if (isAuthenticated) {
+        refreshBoard();
+      }
+    };
+    init();
+  }, [checkAuth, refreshBoard]);
 
   const saveBoard = useCallback(async (newBoard: BoardData) => {
     try {
@@ -63,9 +86,9 @@ export const KanbanBoard = () => {
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-      window.location.href = "/login";
     } catch (error) {
       console.error("Logout failed:", error);
+    } finally {
       window.location.href = "/login";
     }
   };
@@ -157,6 +180,16 @@ export const KanbanBoard = () => {
       <div className="flex min-h-screen items-center justify-center bg-[var(--surface)]">
         <div className="text-lg font-semibold text-[var(--gray-text)] animate-pulse">
           Loading your workspace...
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[var(--surface)]">
+        <div className="text-lg font-semibold text-red-600">
+          {error}
         </div>
       </div>
     );

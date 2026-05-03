@@ -2,13 +2,14 @@ import os
 import httpx
 import json
 from typing import List, Dict
+from fastapi import HTTPException
 
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 MODEL = "openai/gpt-oss-120b:free"
 
 async def call_ai(messages: List[Dict[str, str]], board_context: Dict = None):
     if not OPENROUTER_API_KEY:
-        return {"error": "OPENROUTER_API_KEY not set"}
+        raise HTTPException(status_code=500, detail="OPENROUTER_API_KEY not set")
 
     system_prompt = """You are a helpful project management assistant for a Kanban board app.
 You can help the user by renaming columns, adding cards, moving cards, editing cards, or deleting cards.

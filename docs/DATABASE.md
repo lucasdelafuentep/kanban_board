@@ -12,7 +12,7 @@ Stores user credentials.
 | :--- | :--- | :--- |
 | `id` | INTEGER | Primary Key |
 | `username` | TEXT | Unique username |
-| `password` | TEXT | Password (hardcoded to 'password' for MVP) |
+| `password` | TEXT | Bcrypt hashed password |
 
 ### `boards`
 

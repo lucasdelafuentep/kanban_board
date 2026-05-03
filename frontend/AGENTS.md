@@ -7,7 +7,9 @@ This document describes the existing code in the frontend directory of the Proje
 - Kanban board with 5 fixed columns (Backlog, Discovery, In Progress, Review, Done)
 - Columns can be renamed
 - Cards can be added, edited, deleted, and moved between columns via drag-and-drop
-- All state is currently in-memory (no backend integration yet)
+- Backend API integration for persistence (`/api/board`)
+- AI chat sidebar (`AiSidebar.tsx`) integrated with `/api/ai/chat`
+- Login page with JWT-based authentication
 - Unit and integration tests using Vitest and Playwright
 
 ### Key Components

@@ -3,10 +3,10 @@
 
 ## Part 1: Plan
 
-- [ ] Review business requirements and technical decisions in AGENTS.md
-- [ ] Review existing frontend code and document in frontend/AGENTS.md
-- [ ] Enrich PLAN.md with detailed substeps, checklists, and success criteria for each part
-- [ ] Get user approval for the plan before proceeding
+- [x] Review business requirements and technical decisions in AGENTS.md
+- [x] Review existing frontend code and document in frontend/AGENTS.md
+- [x] Enrich PLAN.md with detailed substeps, checklists, and success criteria for each part
+- [x] Get user approval for the plan before proceeding
 
 **Success Criteria:**
 - PLAN.md contains a detailed, actionable checklist for each part
@@ -21,12 +21,12 @@
 
 ## Part 2: Scaffolding
 
-- [ ] Set up Dockerfile and docker-compose.yml for local development
-- [ ] Scaffold backend/ with FastAPI app
-- [ ] Scaffold scripts/ with start/stop scripts for Mac, PC, Linux
-- [ ] Serve example static HTML from FastAPI at /
-- [ ] Add a test API route (e.g., /api/hello)
-- [ ] Validate that the container builds and runs locally
+- [x] Set up Dockerfile and docker-compose.yml for local development
+- [x] Scaffold backend/ with FastAPI app
+- [x] Scaffold scripts/ with start/stop scripts for Mac, PC, Linux
+- [x] Serve example static HTML from FastAPI at /
+- [x] Add a test API route (e.g., /api/hello)
+- [x] Validate that the container builds and runs locally
 
 **Success Criteria:**
 - Running the container serves static HTML at /
@@ -41,10 +41,10 @@
 
 ## Part 3: Add in Frontend
 
-- [ ] Integrate Next.js frontend build into Docker setup
-- [ ] Serve built frontend from FastAPI at /
-- [ ] Validate that the Kanban board demo loads at /
-- [ ] Ensure all frontend unit and integration tests pass
+- [x] Integrate Next.js frontend build into Docker setup
+- [x] Serve built frontend from FastAPI at /
+- [x] Validate that the Kanban board demo loads at /
+- [x] Ensure all frontend unit and integration tests pass
 
 **Success Criteria:**
 - Kanban board is visible at /
@@ -59,11 +59,11 @@
 
 ## Part 4: Add in a fake user sign in experience
 
-- [ ] Add login page to frontend
-- [ ] Require login before showing Kanban board
-- [ ] Use hardcoded credentials: user / password
-- [ ] Add logout functionality
-- [ ] Add tests for login, logout, and access control
+- [x] Add login page to frontend
+- [x] Require login before showing Kanban board
+- [x] Use hardcoded credentials: user / password
+- [x] Add logout functionality
+- [x] Add tests for login, logout, and access control
 
 **Success Criteria:**
 - Kanban board is only visible after login
@@ -78,10 +78,10 @@
 
 ## Part 5: Database modeling
 
-- [ ] Propose a database schema for Kanban board (supporting multiple users, 1 board per user)
-- [ ] Use SQLite, store Kanban as JSON
-- [ ] Document schema and approach in docs/
-- [ ] Get user sign-off before implementation
+- [x] Propose a database schema for Kanban board (supporting multiple users, 1 board per user)
+- [x] Use SQLite, store Kanban as JSON
+- [x] Document schema and approach in docs/
+- [x] Get user sign-off before implementation
 
 **Success Criteria:**
 - Schema supports all required features
@@ -95,9 +95,9 @@
 
 ## Part 6: Backend
 
-- [ ] Implement API routes for CRUD operations on Kanban board (per user)
-- [ ] Ensure database is created if it doesn't exist
-- [ ] Add backend unit tests for all API routes
+- [x] Implement API routes for CRUD operations on Kanban board (per user)
+- [x] Ensure database is created if it doesn't exist
+- [x] Add backend unit tests for all API routes
 
 **Success Criteria:**
 - All API routes work as expected
@@ -112,9 +112,9 @@
 
 ## Part 7: Frontend + Backend
 
-- [ ] Update frontend to use backend API for Kanban data
-- [ ] Ensure board state is persistent per user
-- [ ] Add tests for frontend-backend integration
+- [x] Update frontend to use backend API for Kanban data
+- [x] Ensure board state is persistent per user
+- [x] Add tests for frontend-backend integration
 
 **Success Criteria:**
 - Kanban board persists changes via API
@@ -128,9 +128,9 @@
 
 ## Part 8: AI connectivity
 
-- [ ] Add OpenRouter API key to backend
-- [ ] Implement backend call to OpenRouter (model: openai/gpt-oss-120b:free)
-- [ ] Test with a simple "2+2" prompt
+- [x] Add OpenRouter API key to backend
+- [x] Implement backend call to OpenRouter (model: openai/gpt-oss-120b:free)
+- [x] Test with a simple "2+2" prompt
 
 **Success Criteria:**
 - Backend can call OpenRouter and receive a response
@@ -143,10 +143,10 @@
 
 ## Part 9: AI Kanban integration
 
-- [ ] Extend backend AI call to include Kanban JSON and user question/history
-- [ ] Parse AI structured output (response + optional Kanban update)
-- [ ] Apply Kanban updates if present
-- [ ] Add tests for structured output handling
+- [x] Extend backend AI call to include Kanban JSON and user question/history
+- [x] Parse AI structured output (response + optional Kanban update)
+- [x] Apply Kanban updates if present
+- [x] Add tests for structured output handling
 
 **Success Criteria:**
 - AI can update Kanban and respond to user
@@ -160,11 +160,11 @@
 
 ## Part 10: AI chat sidebar
 
-- [ ] Add sidebar widget to frontend for AI chat
-- [ ] Integrate with backend AI API
-- [ ] Display AI responses and update Kanban as needed
-- [ ] Auto-refresh UI on Kanban update
-- [ ] Add tests for sidebar and AI integration
+- [x] Add sidebar widget to frontend for AI chat
+- [x] Integrate with backend AI API
+- [x] Display AI responses and update Kanban as needed
+- [x] Auto-refresh UI on Kanban update
+- [x] Add tests for sidebar and AI integration
 
 **Success Criteria:**
 - Sidebar supports full AI chat and Kanban updates

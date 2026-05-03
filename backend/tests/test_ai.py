@@ -17,8 +17,8 @@ async def test_ai_chat_real():
         
     assert response.status_code == 200
     data = response.json()
-    assert "content" in data
-    print(f"AI Response: {data['content']}")
+    assert "message" in data
+    print(f"AI Response: {data['message']}")
 
 @pytest.mark.asyncio
 async def test_ai_chat_unauthorized():
